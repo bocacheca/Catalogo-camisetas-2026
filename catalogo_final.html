@@ -48,6 +48,31 @@
   .visor img{max-width:90vw;max-height:88vh;object-fit:contain}
   .vc{position:fixed;top:20px;right:28px;font-size:34px;color:#aaa;cursor:pointer;background:none;border:none}
   .vn{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#888;white-space:nowrap}
+
+  /* BUSCADOR */
+  .search-bar-wrap{background:var(--negro);padding:12px 24px;position:sticky;top:56px;z-index:99;border-bottom:1px solid #1a1a1a;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .search-input{flex:1;min-width:200px;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:4px;padding:9px 14px;color:var(--blanco);font-family:'DM Sans',sans-serif;font-size:13px;outline:none;transition:border-color .2s}
+  .search-input:focus{border-color:var(--acento)}
+  .search-input::placeholder{color:#555;letter-spacing:.5px}
+  .search-count{font-size:11px;color:#555;letter-spacing:1px;white-space:nowrap}
+  .search-clear{background:none;border:none;color:#555;font-size:18px;cursor:pointer;padding:0 4px;line-height:1}
+  .search-clear:hover{color:var(--blanco)}
+  .card.hidden{display:none}
+  .no-results{padding:40px;text-align:center;color:#555;font-size:13px;letter-spacing:1px;display:none}
+  .no-results.show{display:block}
+  /* BUSCADOR POR LIGA */
+  .liga-search-wrap{padding:12px 16px;background:#f5f5f0;border-bottom:1px solid var(--linea);display:flex;gap:8px;align-items:center}
+  .liga-search{flex:1;background:#fff;border:1px solid var(--linea);border-radius:4px;padding:7px 12px;font-family:'DM Sans',sans-serif;font-size:12px;color:var(--negro);outline:none;transition:border-color .2s}
+  .liga-search:focus{border-color:var(--acento)}
+  .liga-search::placeholder{color:#aaa}
+  .liga-result-count{font-size:11px;color:#aaa;white-space:nowrap}
+  /* LIGA TABS */
+  .liga-tabs{display:flex;flex-wrap:wrap;gap:8px;padding:16px 20px;background:#f8f8f6;border-bottom:1px solid #e0ddd5}
+  .liga-tab{background:#fff;border:2px solid var(--lc,#333);color:var(--lc,#333);font-weight:700;font-size:.75rem;padding:6px 14px;border-radius:20px;cursor:pointer;transition:.2s;letter-spacing:.5px}
+  .liga-tab.active,.liga-tab:hover{background:var(--lc,#333);color:#fff}
+  .liga-header{display:flex;justify-content:space-between;align-items:center;padding:12px 20px;background:var(--lc,#333);color:#fff;font-weight:700;font-size:.9rem}
+  .liga-count{font-size:.72rem;opacity:.7;font-weight:400}
+
   @media(max-width:600px){.grid{grid-template-columns:repeat(2,1fr)}.sw{padding:0 12px}}
 </style>
 </head>
@@ -64,6 +89,14 @@
     <a href="#f1">Rugby &amp; F1</a>
   </nav>
 </header>
+
+<div class="search-bar-wrap" id="searchBarWrap">
+  <span style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:#555">🔍</span>
+  <input class="search-input" id="globalSearch" type="text" placeholder="Buscar camiseta, equipo, liga..." oninput="globalSearchFn()">
+  <button class="search-clear" onclick="clearSearch()" title="Limpiar">✕</button>
+  <span class="search-count" id="searchCount"></span>
+</div>
+
 <div class="portada">
   <p class="portada-sub">Colección completa · Fase 1</p>
   <h1>CATÁLOGO<br><em>DEPORTIVO</em><br>2026</h1>
@@ -76306,4 +76339,76 @@ function abrir(s,n){document.getElementById('vi').src=s||PH;document.getElementB
 function cerrar(e){if(e&&e.target.id!=='visor'&&!e.target.classList.contains('vc'))return;document.getElementById('visor').classList.remove('open');document.body.style.overflow=''}
 document.addEventListener('keydown',e=>{if(e.key==='Escape')cerrar({});});
 </script>
+
+<script>
+// ── BUSCADOR GLOBAL ──
+function globalSearchFn() {
+  var q = document.getElementById('globalSearch').value.toLowerCase().trim();
+  var cards = document.querySelectorAll('.card');
+  var visible = 0;
+  cards.forEach(function(card) {
+    var text = (card.querySelector('.cn') ? card.querySelector('.cn').textContent : '') +
+               (card.querySelector('.t-etiqueta') ? card.querySelector('.t-etiqueta').textContent : '') +
+               (card.querySelector('img') ? card.querySelector('img').alt : '');
+    text = text.toLowerCase();
+    if (!q || text.includes(q)) {
+      card.classList.remove('hidden');
+      visible++;
+    } else {
+      card.classList.add('hidden');
+    }
+  });
+  var countEl = document.getElementById('searchCount');
+  if (q) {
+    countEl.textContent = visible + ' resultado' + (visible !== 1 ? 's' : '');
+  } else {
+    countEl.textContent = '';
+  }
+}
+
+function clearSearch() {
+  document.getElementById('globalSearch').value = '';
+  globalSearchFn();
+}
+
+// ── BUSCADOR POR LIGA ──
+function ligaSearchFn(ligaId) {
+  var q = document.getElementById('search-' + ligaId).value.toLowerCase().trim();
+  var section = document.getElementById('liga-' + ligaId);
+  var cards = section.querySelectorAll('.card');
+  var visible = 0;
+  cards.forEach(function(card) {
+    var text = (card.querySelector('.cn') ? card.querySelector('.cn').textContent : '') +
+               (card.querySelector('img') ? card.querySelector('img').alt : '');
+    text = text.toLowerCase();
+    if (!q || text.includes(q)) {
+      card.style.display = '';
+      visible++;
+    } else {
+      card.style.display = 'none';
+    }
+  });
+  var countEl = document.getElementById('count-' + ligaId);
+  if (countEl) countEl.textContent = q ? visible + ' resultado' + (visible !== 1 ? 's' : '') : '';
+}
+
+// ── TABS DE LIGA ──
+function showLiga(id) {
+  document.querySelectorAll('.liga-section').forEach(function(s) { s.style.display = 'none'; });
+  document.querySelectorAll('.liga-tab').forEach(function(t) { t.classList.remove('active'); });
+  var section = document.getElementById('liga-' + id);
+  if (section) section.style.display = 'block';
+  var tabs = document.querySelectorAll('.liga-tab');
+  tabs.forEach(function(t) { if (t.dataset.liga === id) t.classList.add('active'); });
+}
+
+// Mostrar primera liga por defecto
+document.addEventListener('DOMContentLoaded', function() {
+  var first = document.querySelector('.liga-section');
+  if (first) { first.style.display = 'block'; }
+  var firstTab = document.querySelector('.liga-tab');
+  if (firstTab) { firstTab.classList.add('active'); }
+});
+</script>
+
 </body></html>
